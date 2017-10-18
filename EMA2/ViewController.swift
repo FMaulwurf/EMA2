@@ -112,6 +112,8 @@ class ViewController: UIViewController {
         barChartView.rightAxis.axisMinimum = -self.maxDisplayedValues
         barChartView.rightAxis.axisMaximum = self.maxDisplayedValues
         
+        barChartView.xAxis.drawLabelsEnabled = false
+        
         motionManager.accelerometerUpdateInterval = self.updateInterval
         motionManager.startAccelerometerUpdates(to: OperationQueue.main) { accelerometerData, error in
             if (accelerometerData != nil) {
