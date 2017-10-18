@@ -12,10 +12,52 @@ class ViewController: UIViewController {
     @IBOutlet weak var yLabel: UILabel!
     @IBOutlet weak var zLabel: UILabel!
     
+    @IBOutlet weak var StartButton: UIButton!
+    
     let lengthOfDoubles = 6
     let sampleSpeed = 0.05
     
     let motionManager = CMMotionManager()
+    let recordLength: Int = 10
+    
+    var isRecording: Bool = false
+    
+    var startOfRecording: Date? = nil
+    var timer: Timer? = nil
+
+    var file: FileHandle? = nil {
+        didSet {
+            isRecording = file != nil
+        }
+    }
+    
+    @IBAction func startRecording() {
+        if (!isRecording) {
+            StartButton.setTitle("0 seconds", for: .normal)
+            self.file = FileHandle(forWritingAtPath: "output-" + String(getTimestamp()) + ".csv")
+            startOfRecording = Date()
+            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(ViewController.updateRecordedTime), userInfo: nil, repeats: true)
+        }
+    }
+    
+    @objc func updateRecordedTime() {
+        let diff: Int = Int(Date().timeIntervalSince(startOfRecording!))
+        if (recordLength < diff) {
+            recordStop()
+            StartButton.setTitle("Start Recording", for: .normal)
+        } else {
+            StartButton.setTitle(String(diff) + " seconds", for: .normal)
+        }
+    }
+    
+    @IBAction func stopRecording() {
+        recordStop()
+    }
+
+    func recordStop() {
+        self.file = nil
+        self.timer?.invalidate()
+    }
     
     var x : Double = 0.0 {
         didSet(x) {
@@ -50,11 +92,16 @@ class ViewController: UIViewController {
             }
         }
     }
-
+    
 }
 
+// Enough for displaying orientation changes
 func normalizeValue(val : Double) -> Double {
     return (val + 1.0) / 2.0;
+}
+
+func getTimestamp() -> Int {
+    return Int(Date().timeIntervalSince1970 * 1000)
 }
 
 extension Double {
