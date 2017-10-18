@@ -27,6 +27,13 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        barChartView.leftAxis.axisMinimum = -1.0
+        barChartView.leftAxis.axisMaximum = 1.0
+        
+        barChartView.rightAxis.axisMinimum = -1.0
+        barChartView.rightAxis.axisMaximum = 1.0
+        
+        motionManager.accelerometerUpdateInterval = 0.01
         motionManager.startAccelerometerUpdates(to: OperationQueue.main) { accelerometerData, error in
             if let x = accelerometerData?.acceleration.x {
                 self.xValue.text = String(describing: x)
@@ -49,6 +56,7 @@ class ViewController: UIViewController {
     }
     
     func barChartUpdate () {
+ 
         let xEntry = BarChartDataEntry(x: 1.0, y: self.x)
         let dataSetX = BarChartDataSet(values: [xEntry], label: "X")
         dataSetX.valueColors = [UIColor.red]
