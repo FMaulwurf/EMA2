@@ -4,7 +4,7 @@
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -35,7 +35,7 @@
                                                     <action selector="startRecording" destination="BYZ-38-t0r" eventType="touchUpInside" id="hfg-kD-v5z"/>
                                                 </connections>
                                             </button>
-                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WZ1-LE-G2w">
+                                            <button opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WZ1-LE-G2w">
                                                 <rect key="frame" x="187.5" y="0.0" width="187.5" height="30"/>
                                                 <state key="normal" title="Stop Recording"/>
                                                 <connections>
@@ -162,6 +162,8 @@
                     <connections>
                         <outlet property="barChartView" destination="61c-wj-XGS" id="8cg-5e-EAM"/>
                         <outlet property="recordedTimeLabel" destination="jPC-4v-zJr" id="ClM-Xw-QDp"/>
+                        <outlet property="startButton" destination="Mx5-iz-BdQ" id="qUY-qm-gPP"/>
+                        <outlet property="stopButton" destination="WZ1-LE-G2w" id="m11-f0-lvk"/>
                         <outlet property="xValue" destination="JMp-hr-3I4" id="s6d-P7-WMK"/>
                         <outlet property="yValue" destination="QBi-Dt-jJh" id="1qU-ZK-3gd"/>
                         <outlet property="zValue" destination="0W3-Cf-Fea" id="mSf-xw-niS"/>

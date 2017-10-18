@@ -18,12 +18,16 @@ class ViewController: UIViewController {
     @IBOutlet var barChartView: BarChartView!
     @IBOutlet weak var recordedTimeLabel: UILabel!
     
+    @IBOutlet weak var startButton: UIButton!
+    @IBOutlet weak var stopButton: UIButton!
+    
+    
     let motionManager = CMMotionManager()
     let maxDisplayedValues: Double = 1.5
     let updateInterval: Double = 0.05
     let maxDisplayedLength: Int = 10
     let recordLength: Int = 10
-    let CSV_DELIMITER: String = ";"
+    let CSV_DELIMITER: String = ","
     let CSV_EOL: String = "\n"
     let dir = try? FileManager.default.url(for: .documentDirectory,
                                            in: .userDomainMask, appropriateFor: nil, create: true)
@@ -42,7 +46,10 @@ class ViewController: UIViewController {
                 if (firstTimestamp == nil) {
                     firstTimestamp = acc.timestamp
                 }
-                self.appendValuesToLog(time: String(Int((acc.timestamp - firstTimestamp!) * 1000)), x: String(acc.acceleration.x), y: String(acc.acceleration.y), z: String(acc.acceleration.z))
+                let diff: Int = Int((acc.timestamp - firstTimestamp!) * 1000)
+                if (diff >= 2000 && diff <= 8000) {
+                    self.appendValuesToLog(time: String(diff), x: String(acc.acceleration.x), y: String(acc.acceleration.y), z: String(acc.acceleration.z))
+                }
             }
         }
     }
@@ -54,6 +61,8 @@ class ViewController: UIViewController {
     
     @IBAction func startRecording() {
         if (!isRecording) {
+            startButton.isEnabled = false
+            stopButton.isEnabled = true
             recordedTimeLabel.text = "0s"
             self.appendValuesToLog(time: "timestamp", x: "X", y: "Y", z: "Z")
             let filename = "output_" + String(getFormatedDateForFileName())
@@ -90,6 +99,8 @@ class ViewController: UIViewController {
         recordedValues = []
         firstTimestamp = nil
         recordedTimeLabel.text = "0s"
+        startButton.isEnabled = true
+        stopButton.isEnabled = false
     }
     
     override func viewDidLoad() {
