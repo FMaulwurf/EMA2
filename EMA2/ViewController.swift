@@ -1,31 +1,52 @@
+//
+//  ViewController.swift
+//  EMA2
+//
+//  Created by Felix M. on 17.10.17.
+//  Copyright © 2017 Felix M. All rights reserved.
+//
+
 import UIKit
 import CoreMotion
 import Charts
 
 class ViewController: UIViewController {
     
-    @IBOutlet weak var xProgressView: UIProgressView!
-    @IBOutlet weak var yProgressView: UIProgressView!
-    @IBOutlet weak var zProgressView: UIProgressView!
-    
-    @IBOutlet weak var xLabel: UILabel!
-    @IBOutlet weak var yLabel: UILabel!
-    @IBOutlet weak var zLabel: UILabel!
-    
-    @IBOutlet weak var StartButton: UIButton!
-    
-    let lengthOfDoubles = 6
-    let sampleSpeed = 0.05
+    @IBOutlet weak var xValue: UILabel!
+    @IBOutlet weak var yValue: UILabel!
+    @IBOutlet weak var zValue: UILabel!
+    @IBOutlet var barChartView: BarChartView!
+    @IBOutlet weak var recordedTimeLabel: UILabel!
     
     let motionManager = CMMotionManager()
+    let maxDisplayedValues: Double = 1.5
+    let updateInterval: Double = 0.05
+    let maxDisplayedLength: Int = 10
     let recordLength: Int = 10
-    
+    let CSV_DELIMITER: String = ";"
+    let CSV_EOL: String = "\n"
+    let dir = try? FileManager.default.url(for: .documentDirectory,
+                                           in: .userDomainMask, appropriateFor: nil, create: true)
     var isRecording: Bool = false
-    
     var startOfRecording: Date? = nil
+    var firstTimestamp: Double? = nil
     var timer: Timer? = nil
-
-    var file: FileHandle? = nil {
+    var recordedValues: [String] = []
+    
+    var acc: CMAccelerometerData = CMAccelerometerData() {
+        didSet {
+            self.xValue.text = truncate(acc.acceleration.x, self.maxDisplayedLength)
+            self.yValue.text = truncate(acc.acceleration.y, self.maxDisplayedLength)
+            self.zValue.text = truncate(acc.acceleration.z, self.maxDisplayedLength)
+            if (isRecording) {
+                if (firstTimestamp == nil) {
+                    firstTimestamp = acc.timestamp
+                }
+                self.appendValuesToLog(time: String(Int((acc.timestamp - firstTimestamp!) * 1000)), x: String(acc.acceleration.x), y: String(acc.acceleration.y), z: String(acc.acceleration.z))
+            }
+        }
+    }
+    var file: URL? = nil {
         didSet {
             isRecording = file != nil
         }
@@ -33,79 +54,104 @@ class ViewController: UIViewController {
     
     @IBAction func startRecording() {
         if (!isRecording) {
-            StartButton.setTitle("0 seconds", for: .normal)
-            self.file = FileHandle(forWritingAtPath: "output-" + String(getTimestamp()) + ".csv")
+            recordedTimeLabel.text = "0s"
+            self.appendValuesToLog(time: "timestamp", x: "X", y: "Y", z: "Z")
+            let filename = "output_" + String(getFormatedDateForFileName())
+            if (dir != nil) {
+                self.file = dir?.appendingPathComponent(filename).appendingPathExtension("csv")
+            }
             startOfRecording = Date()
             timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(ViewController.updateRecordedTime), userInfo: nil, repeats: true)
-        }
-    }
-    
-    @objc func updateRecordedTime() {
-        let diff: Int = Int(Date().timeIntervalSince(startOfRecording!))
-        if (recordLength < diff) {
-            recordStop()
-            StartButton.setTitle("Start Recording", for: .normal)
-        } else {
-            StartButton.setTitle(String(diff) + " seconds", for: .normal)
         }
     }
     
     @IBAction func stopRecording() {
         recordStop()
     }
-
-    func recordStop() {
-        self.file = nil
-        self.timer?.invalidate()
+    
+    func appendValuesToLog(time: String, x: String, y: String, z: String) {
+        recordedValues.append(time + self.CSV_DELIMITER + x + self.CSV_DELIMITER + y + self.CSV_DELIMITER + z + self.CSV_EOL)
     }
     
-    var x : Double = 0.0 {
-        didSet(x) {
-            let normalizedX: Double = normalizeValue(val: x)
-            self.xProgressView.setProgress(Float(normalizedX), animated: false)
-            self.xLabel.text = String(x.truncate(places: self.lengthOfDoubles))
-        }
-    }
-    var y : Double = 0.0 {
-        didSet(y) {
-            let normalizedY: Double = normalizeValue(val: y)
-            self.yProgressView.setProgress(Float(normalizedY), animated: false)
-            self.yLabel.text = String(y.truncate(places: self.lengthOfDoubles))
-        }
-    }
-    var z : Double = 0.0 {
-        didSet(z) {
-            let normalizedZ: Double = normalizeValue(val: z)
-            self.zProgressView.setProgress(Float(normalizedZ), animated: false)
-            self.zLabel.text = String(z.truncate(places: self.lengthOfDoubles))
-        }
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        motionManager.accelerometerUpdateInterval = self.sampleSpeed
-        motionManager.startAccelerometerUpdates(to: OperationQueue.main) { accelerometerData, error in
-            if let acc = accelerometerData?.acceleration {
-                self.x = acc.x
-                self.y = acc.y
-                self.z = acc.z
+    func writeToFile() {
+        if (self.file != nil) {
+            do {
+                try recordedValues.joined().write(to: self.file!, atomically: true, encoding: .utf8)
+            } catch {
+                print("Failed writing to URL: \(String(describing: self.file!)), Error: " + error.localizedDescription)
             }
         }
     }
     
-}
-
-// Enough for displaying orientation changes
-func normalizeValue(val : Double) -> Double {
-    return (val + 1.0) / 2.0;
-}
-
-func getTimestamp() -> Int {
-    return Int(Date().timeIntervalSince1970 * 1000)
-}
-
-extension Double {
-    func truncate(places : Int) -> Double {
-        return Double(floor(pow(10.0, Double(places)) * self)/pow(10.0, Double(places)))
+    func recordStop() {
+        writeToFile()
+        self.file = nil
+        self.timer?.invalidate()
+        recordedValues = []
+        firstTimestamp = nil
+        recordedTimeLabel.text = "0s"
     }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        barChartView.leftAxis.axisMinimum = -self.maxDisplayedValues
+        barChartView.leftAxis.axisMaximum = self.maxDisplayedValues
+        
+        barChartView.rightAxis.axisMinimum = -self.maxDisplayedValues
+        barChartView.rightAxis.axisMaximum = self.maxDisplayedValues
+        
+        motionManager.accelerometerUpdateInterval = self.updateInterval
+        motionManager.startAccelerometerUpdates(to: OperationQueue.main) { accelerometerData, error in
+            if (accelerometerData != nil) {
+                self.acc = accelerometerData!
+                self.barChartUpdate()
+            }
+        }
+    }
+    
+    @objc func updateRecordedTime() {
+        let diff: Int = Int(Date().timeIntervalSince(startOfRecording!))
+        if (self.recordLength < diff) {
+            recordStop()
+        } else {
+            recordedTimeLabel.text = String(diff) + "s"
+        }
+    }
+    
+    func barChartUpdate () {
+ 
+        let xEntry = BarChartDataEntry(x: 1.0, y: self.acc.acceleration.x)
+        let dataSetX = BarChartDataSet(values: [xEntry], label: "X")
+        dataSetX.valueColors = [UIColor.red]
+        dataSetX.colors = [UIColor.red]
+        
+        let yEntry = BarChartDataEntry(x: 2.0, y: self.acc.acceleration.y)
+        let dataSetY = BarChartDataSet(values: [yEntry], label: "Y")
+        dataSetY.valueColors = [UIColor.green]
+        dataSetY.colors = [UIColor.green]
+        
+        let zEntry = BarChartDataEntry(x: 3.0, y: self.acc.acceleration.z)
+        let dataSetZ = BarChartDataSet(values: [zEntry], label: "Z")
+        dataSetZ.valueColors = [UIColor.blue]
+        dataSetZ.colors = [UIColor.blue]
+        
+        let data = BarChartData(dataSets: [dataSetX, dataSetY, dataSetZ])
+        barChartView.data = data
+        barChartView.chartDescription?.text = "Accelerator Values"
+        
+        barChartView.notifyDataSetChanged()
+    }
+
 }
+
+func getFormatedDateForFileName() -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyyMMdd_HH-mm-ss"
+    return formatter.string(from: Date())
+}
+
+func truncate(_ val: Double, _ length: Int) -> String {
+    return String(format: "%." + String(length) + "f", val)
+}
+
