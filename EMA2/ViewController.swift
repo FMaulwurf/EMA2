@@ -27,8 +27,9 @@ class ViewController: UIViewController {
     let updateInterval: Double = 0.05
     let maxDisplayedLength: Int = 10
     let recordLength: Int = 10
-    let CSV_DELIMITER: String = ","
+    let CSV_DELIMITER: String = ";"
     let CSV_EOL: String = "\n"
+    let GRAV_FORCE: Double = 9.81
     let dir = try? FileManager.default.url(for: .documentDirectory,
                                            in: .userDomainMask, appropriateFor: nil, create: true)
     var isRecording: Bool = false
@@ -48,7 +49,7 @@ class ViewController: UIViewController {
                 }
                 let diff: Int = Int((acc.timestamp - firstTimestamp!) * 1000)
                 if (diff >= 2000 && diff <= 8000) {
-                    self.appendValuesToLog(time: String(diff), x: String(acc.acceleration.x), y: String(acc.acceleration.y), z: String(acc.acceleration.z))
+                    self.appendValuesToLog(time: String(diff), x: generateStringForLog(acc.acceleration.x), y: generateStringForLog(acc.acceleration.y), z: generateStringForLog(acc.acceleration.z))
                 }
             }
         }
@@ -57,6 +58,10 @@ class ViewController: UIViewController {
         didSet {
             isRecording = file != nil
         }
+    }
+    
+    func generateStringForLog(_ value:Double) -> String{
+        return String(value * self.GRAV_FORCE).replacingOccurrences(of: ".", with: ",")
     }
     
     @IBAction func startRecording() {
