@@ -61,7 +61,7 @@ class ViewController: UIViewController {
     }
     
     func generateStringForLog(_ value:Double) -> String{
-        return String(value * self.GRAV_FORCE).replacingOccurrences(of: ".", with: ",")
+        return String(abs(value) * self.GRAV_FORCE).replacingOccurrences(of: ".", with: ",")
     }
     
     @IBAction func startRecording() {
