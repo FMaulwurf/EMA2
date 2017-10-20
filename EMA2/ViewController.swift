@@ -24,7 +24,7 @@ class ViewController: UIViewController {
     
     let motionManager = CMMotionManager()
     let maxDisplayedValues: Double = 1.5
-    let updateInterval: Double = 0.05
+    let updateInterval: Double = 0.025
     let maxDisplayedLength: Int = 10
     let recordLength: Int = 10
     let CSV_DELIMITER: String = ";"
